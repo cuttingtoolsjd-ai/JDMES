@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operator Efficiency</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #f4f7fa 0%, #e3eaf1 100%);
+            margin: 0;
+            color: #1e293b;
+            text-align: center;
+        }
+        h2 {
+            margin: 20px 0;
+            color: #c62828;
+            font-size: 2em;
+        }
+        .table-wrapper {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+            font-size: 1em;
+        }
+        th {
+            background: #e0f2fe;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            display: inline-block;
+            color: #fff;
+        }
+        .badge-green { background: #2e7d32; }   /* good */
+        .badge-yellow { background: #f9a825; }  /* warning */
+        .badge-red { background: #c62828; }     /* poor */
+        a {
+            color: #c62828;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            h2 { font-size: 1.6em; }
+            th, td { font-size: 0.9em; padding: 10px; }
+        }
+        @media (max-width: 480px) {
+            h2 { font-size: 1.3em; }
+            table { font-size: 0.8em; }
+            th, td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <h2>📊 Operator Efficiency</h2>
+    <div class="table-wrapper">
+        <table>
+            <tr>
+                <th>Operator</th>
+                <th>Completed</th>
+                <th>Partial</th>
+                <th>Rejected Qty</th>
+                <th>Completion Rate (%)</th>
+                <th>Rejection Rate (%)</th>
+                <th>Time Efficiency (%)</th>
+                <th>Overall Score</th>
+                <th>Today's Completed</th>
+                <th>Today's Rejected</th>
+            </tr>
+            {% for op in operator_efficiency %}
+            <tr>
+                <td>{{ op.operator }}</td>
+                <td>{{ op.completed }}</td>
+                <td>{{ op.partial }}</td>
+                <td>{{ op.rejected_qty }}</td>
+                <td>
+                    {% if op.completion_rate >= 90 %}
+                        <span class="badge badge-green">{{ op.completion_rate }}</span>
+                    {% elif op.completion_rate >= 70 %}
+                        <span class="badge badge-yellow">{{ op.completion_rate }}</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ op.completion_rate }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if op.rejection_rate <= 5 %}
+                        <span class="badge badge-green">{{ op.rejection_rate }}</span>
+                    {% elif op.rejection_rate <= 15 %}
+                        <span class="badge badge-yellow">{{ op.rejection_rate }}</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ op.rejection_rate }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if op.time_efficiency >= 90 %}
+                        <span class="badge badge-green">{{ op.time_efficiency }}</span>
+                    {% elif op.time_efficiency >= 70 %}
+                        <span class="badge badge-yellow">{{ op.time_efficiency }}</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ op.time_efficiency }}</span>
+                    {% endif %}
+                </td>
+                <td><b>{{ op.overall_score }}</b></td>
+                <td>{{ op.daily_completed }}</td>
+                <td>{{ op.daily_rejected }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <p><a href="{{ url_for('manager_dashboard', username=session['username']) }}">⬅ Back to Dashboard</a></p>
+</body>
+</html>

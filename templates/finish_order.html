@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finish Work Order</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            color: #1e293b;
+        }
+        .header-logo {
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+        .header-logo img {
+            height: 70px;
+        }
+        h2 {
+            color: #2e7d32;
+            margin-bottom: 16px;
+            font-size: 2em;
+        }
+        h3 {
+            color: #c62828;
+            margin-top: 24px;
+            font-size: 1.4em;
+        }
+        form {
+            background: #fff;
+            padding: 32px;
+            margin: 24px auto;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            text-align: left;
+        }
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 10px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1.1em;
+            background: #fdfdfd;
+        }
+        input:focus {
+            border: 1px solid #c62828;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #c62828;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #b71c1c;
+        }
+        .log-table {
+            width: 95%;
+            margin: 28px auto;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            font-size: 1em;
+        }
+        .log-table th, .log-table td {
+            padding: 14px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: center;
+        }
+        .log-table th {
+            background: #e0f2fe;
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+        .log-table tr:last-child td {
+            border-bottom: none;
+        }
+        a {
+            color: #c62828;
+            font-weight: 600;
+            font-size: 1.05em;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        #quantitySection, #rejectReason {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            form {
+                padding: 20px;
+                margin: 12px;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            h3 {
+                font-size: 1.2em;
+            }
+            button {
+                font-size: 1em;
+                padding: 14px;
+            }
+            input[type="number"], input[type="text"] {
+                font-size: 1em;
+                padding: 12px;
+            }
+            .log-table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-logo">
+        <img src="{{ url_for('static', filename='qrcodes/logo.png') }}" alt="Company Logo">
+    </div>
+    <h2>✅ Finish or Update Work Order</h2>
+
+    {% if order %}
+    <h3>Work Order Details</h3>
+    <p><b>Order No:</b> {{ order.work_order_no }}</p>
+    <p><b>Part Name:</b> {{ order.part_name }}</p>
+    <p><b>Total Quantity:</b> {{ order.quantity }}</p>
+    <p><b>Completed Qty:</b> {{ order.completed_qty }}</p>
+    <p><b>Rejected Qty:</b> {{ order.rejected_qty }}</p>
+    <p><b>Status:</b> {{ order.status }}</p>
+
+        <form method="POST">
+            <label>Action:</label><br><br>
+            <input type="radio" id="complete" name="action" value="complete" required>
+            <label for="complete">✅ Complete (Full Order)</label><br><br>
+
+            <input type="radio" id="partial" name="action" value="partial">
+            <label for="partial">➗ Complete (Partial)</label><br><br>
+
+            <input type="radio" id="reject" name="action" value="reject">
+            <label for="reject">❌ Reject</label><br><br>
+
+            <div id="quantitySection">
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" name="quantity" min="1">
+            </div>
+
+            <div id="rejectReason">
+                <label for="reason">Rejection Reason:</label>
+                <input type="text" id="reason" name="reason">
+            </div>
+
+            <button type="submit">Submit Update</button>
+        </form>
+    {% else %}
+        <p>No work order selected.</p>
+    {% endif %}
+
+    {% if message %}
+        <p style="color: green; font-weight: 600; font-size: 1.1em;">{{ message }}</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('operator_dashboard', username=session['username']) }}">⬅ Back to Dashboard</a></p>
+
+    {% if logs %}
+    <h3>Work Order Progress Log</h3>
+    <table class="log-table">
+        <tr>
+            <th>Timestamp</th>
+            <th>Operator</th>
+            <th>Action</th>
+            <th>Quantity</th>
+            <th>Reason</th>
+        </tr>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.operator }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.quantity }}</td>
+            <td>{{ log.reason }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    <script>
+        const completeRadio = document.getElementById('complete');
+        const partialRadio = document.getElementById('partial');
+        const rejectRadio = document.getElementById('reject');
+        const quantitySection = document.getElementById('quantitySection');
+        const rejectReason = document.getElementById('rejectReason');
+        const quantityInput = document.getElementById('quantity');
+        const reasonInput = document.getElementById('reason');
+
+        // Safer way to get total quantity with fallback
+        const totalQuantity = JSON.parse('{{ (order.quantity if order and order.quantity is not none else 0) | tojson }}');
+
+        function toggleFields() {
+            if (partialRadio.checked) {
+                quantitySection.style.display = 'block';
+                rejectReason.style.display = 'none';
+                quantityInput.required = true;
+                reasonInput.required = false;
+                quantityInput.readOnly = false;
+                quantityInput.value = "";
+            } else if (rejectRadio.checked) {
+                quantitySection.style.display = 'block';
+                rejectReason.style.display = 'block';
+                quantityInput.required = true;
+                reasonInput.required = true;
+                quantityInput.readOnly = false;
+                quantityInput.value = "";
+            } else if (completeRadio.checked) {
+                quantitySection.style.display = 'block';
+                rejectReason.style.display = 'none';
+                quantityInput.required = true;
+                reasonInput.required = false;
+                quantityInput.readOnly = true;
+                quantityInput.value = totalQuantity; // auto-fill full qty
+            }
+        }
+
+        completeRadio.addEventListener('change', toggleFields);
+        partialRadio.addEventListener('change', toggleFields);
+        rejectRadio.addEventListener('change', toggleFields);
+
+        // Initialize on load
+        toggleFields();
+    </script>
+</body>
+</html>

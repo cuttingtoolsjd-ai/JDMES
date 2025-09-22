@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Work Order</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+        .header-logo {
+            text-align: center;
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+        .header-logo img {
+            height: 56px;
+        }
+        h1 {
+            color: #c62828;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        form {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            max-width: 500px;
+            width: 100%;
+        }
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+        }
+        input[type="text"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #fdfdfd;
+            transition: border 0.2s;
+        }
+        input:focus {
+            border: 1px solid #c62828;
+            outline: none;
+            background: #fff;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #c62828;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #b71c1c;
+        }
+        .qr-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .qr-section h3 {
+            color: #333;
+            margin-bottom: 12px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-content h2 {
+            color: #2e7d32;
+            margin-bottom: 16px;
+        }
+        .close-btn {
+            background: #c62828;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            background: #b71c1c;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-logo">
+        <img src="{{ url_for('static', filename='qrcodes/logo.png') }}" alt="Company Logo">
+    </div>
+    <h1>Create Work Order</h1>
+    <form method="POST">
+        <label>Work Order No:</label>
+        <input type="text" name="work_order_no" required>
+
+        <label>Client Name:</label>
+        <input type="text" name="client_name" required>
+
+        <label>PO Number:</label>
+        <input type="text" name="po_number" required>
+
+        <label>Part Number/Name:</label>
+        <input type="text" name="part_name" required>
+
+        <label>Quantity:</label>
+        <input type="number" name="quantity" required>
+
+        <label>Diameter:</label>
+        <input type="number" step="0.01" name="diameter">
+
+        <label>Flute Length:</label>
+        <input type="number" step="0.01" name="flute_length">
+
+        <label>Overall Length:</label>
+        <input type="number" step="0.01" name="overall_length">
+
+        <label>Due Date:</label>
+        <input type="date" name="due_date">
+
+        <button type="submit">Create Work Order</button>
+    </form>
+
+    {% if message %}
+        <div id="confirmationModal" class="modal" style="display:flex;">
+            <div class="modal-content">
+                <h2>✅ Work Order Created</h2>
+                <p>{{ message }}</p>
+                {% if qr_path %}
+                    <div class="qr-section">
+                        <h3>Your QR Code:</h3>
+                        <img src="{{ qr_path }}" width="200">
+                    </div>
+                {% endif %}
+                <button class="close-btn" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+        <script>
+            function closeModal() {
+                document.getElementById('confirmationModal').style.display = 'none';
+            }
+            // Auto close modal after 5 seconds
+            setTimeout(() => {
+                closeModal();
+            }, 5000);
+        </script>
+    {% endif %}
+</body>
+</html>

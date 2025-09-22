@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Work Order</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #f4f7fa 0%, #e3eaf1 100%);
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+            text-align: center;
+        }
+        .logo-bar {
+            background: #fff;
+            box-shadow: 0 2px 12px #e0e7ef;
+            padding: 18px 0 10px;
+        }
+        .logo-bar img {
+            height: 56px;
+        }
+        h2 {
+            margin: 20px 0;
+            font-size: 1.8em;
+            color: #c62828;
+        }
+        form {
+            background: #fff;
+            display: inline-block;
+            text-align: left;
+            margin-top: 20px;
+            padding: 24px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            color: #2d3e50;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: #c62828;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #b71c1c;
+        }
+        #reader {
+            margin: 20px auto;
+            max-width: 350px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .message {
+            margin-top: 16px;
+            font-weight: 600;
+        }
+        .message.success { color: #2e7d32; }
+        .message.error { color: #c62828; }
+        .order-details {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+            background: #fff;
+            padding: 18px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-weight: 600;
+            color: #c62828;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            form, .order-details {
+                width: 90%;
+                padding: 18px;
+            }
+            h2 { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-bar">
+        <img src="{{ url_for('static', filename='qrcodes/logo.png') }}" alt="Company Logo">
+    </div>
+
+    <h2>📷 Scan or Enter Work Order</h2>
+    <div id="reader"></div>
+
+    <form method="POST" id="scanForm">
+        <label for="work_order_no">Work Order No:</label>
+        <input type="text" id="work_order_no" name="work_order_no" required>
+
+        <label for="username">Operator Name:</label>
+        <input type="text" id="username" name="username" value="{{ session['username'] if session['username'] else '' }}" required>
+
+        <label for="machine">Select Machine:</label>
+        <select id="machine" name="machine" required>
+            <option value="">-- Select Machine --</option>
+            <option value="CNC1">CNC1</option>
+            <option value="CNC2">CNC2</option>
+            <option value="TNC1">TNC1</option>
+            <option value="TNC2">TNC2</option>
+            <option value="Cylindrical1">Cylindrical1</option>
+            <option value="Cylindrical2">Cylindrical2</option>
+        </select>
+
+        <button type="submit">Assign Work Order</button>
+    </form>
+
+    {% if message %}
+        <p class="message {{ 'success' if 'assigned' in message.lower() else 'error' }}">{{ message }}</p>
+    {% endif %}
+
+    {% if order %}
+        <div class="order-details">
+            <h3>Work Order Details</h3>
+            <p><b>Order No:</b> {{ order.work_order_no }}</p>
+            <p><b>Part Name:</b> {{ order.part_name }}</p>
+            <p><b>Quantity:</b> {{ order.quantity }}</p>
+            <p><b>Status:</b> {{ order.status }}</p>
+        </div>
+    {% endif %}
+
+    <a href="{{ url_for('operator_dashboard', username=session['username']) }}" class="back-link">⬅ Back to Dashboard</a>
+
+    <script>
+        let scanner;
+        function onScanSuccess(decodedText) {
+            document.getElementById('work_order_no').value = decodedText;
+
+            if (scanner) {
+                scanner.clear().then(() => {
+                    document.getElementById('reader').innerHTML =
+                        "<p style='color:green; font-weight:600;'>✅ QR Scanned! Submitting...</p>";
+                    // Auto-submit form
+                    document.getElementById('scanForm').submit();
+                }).catch(err => {
+                    console.error("Failed to clear scanner: ", err);
+                });
+            }
+        }
+        scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        scanner.render(onScanSuccess);
+    </script>
+</body>
+</html>

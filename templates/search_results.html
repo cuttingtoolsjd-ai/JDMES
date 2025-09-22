@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f7fa;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            color: #2d3e50;
+            margin-bottom: 18px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(44,62,80,0.1);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid #e0e7ef;
+        }
+        th {
+            background: #d50000;
+            color: #fff;
+            font-weight: 600;
+        }
+        tr:hover td {
+            background: #fff5f5;
+        }
+        .no-results {
+            color: #b71c1c;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 20px;
+        }
+        a.back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 16px;
+            background: #d50000;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.18s;
+        }
+        a.back-link:hover {
+            background: #b71c1c;
+        }
+        .status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: #fff;
+        }
+        .status.Not\ Started { background: #9e9e9e; }
+        .status.In\ Progress { background: #ff9800; }
+        .status.Waiting\ for\ Handover { background: #ef5350; }
+        .status.Completed { background: #4caf50; }
+    </style>
+</head>
+<body>
+    <h2>Search Results for: "{{ query }}"</h2>
+    {% if results %}
+    <table>
+        <tr>
+            <th>Work Order</th>
+            <th>Part Name</th>
+            <th>Quantity</th>
+            <th>Completed</th>
+            <th>Rejected</th>
+            <th>Current Operator</th>
+            <th>Current Machine</th>
+            <th>Status</th>
+        </tr>
+        {% for order in results %}
+        <tr>
+            <td>{{ order.work_order_no }}</td>
+            <td>{{ order.part_name }}</td>
+            <td>{{ order.quantity }}</td>
+            <td>{{ order.completed_qty }}</td>
+            <td>{{ order.rejected_qty }}</td>
+            <td>{{ order.current_operator or "—" }}</td>
+            <td>{{ order.current_machine or "—" }}</td>
+            <td><span class="status {{ order.status|replace(' ', '\ ') }}">{{ order.status }}</span></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="no-results">No results found.</div>
+    {% endif %}
+
+    <a href="javascript:history.back()" class="back-link">⬅ Back</a>
+</body>
+</html>

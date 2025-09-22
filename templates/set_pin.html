@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Your New PIN</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        img {
+            height: 56px;
+            margin-bottom: 18px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #d50000;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            text-align: left;
+            font-weight: 600;
+            color: #444;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #d50000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #b71c1c;
+        }
+        p {
+            margin-top: 12px;
+            color: #d32f2f;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='qrcodes/logo.png') }}" alt="Company Logo">
+        <h2>Set Your New 6-Digit PIN</h2>
+        <form method="POST">
+            <label for="pin">New PIN:</label>
+            <input type="password" id="pin" name="pin" maxlength="6" required>
+            <button type="submit">Save</button>
+        </form>
+        {% if message %}
+            <p>{{ message }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

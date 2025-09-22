@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1e293b;
+        }
+        .header-logo {
+            text-align: center;
+            margin: 24px 0 16px;
+        }
+        .header-logo img {
+            height: 70px;
+        }
+        h1 {
+            text-align: center;
+            color: #2e3a59;
+            margin: 10px 0 5px;
+            font-size: 2em;
+        }
+        p.subtext {
+            text-align: center;
+            font-size: 1.05em;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #444;
+        }
+        .tiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+        .tile {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: #1e293b;
+            font-weight: 600;
+        }
+        .tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .tile span {
+            font-size: 2em;
+            display: block;
+            margin-bottom: 10px;
+        }
+        h2 {
+            text-align: center;
+            margin: 30px 0 15px;
+            color: #c62828;
+        }
+        .table-wrapper {
+            max-width: 1100px;
+            margin: 0 auto 40px;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+            font-size: 1em;
+        }
+        th {
+            background: #e0f2fe;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #fff;
+        }
+        .status-active { background: #2e7d32; }
+        .status-progress { background: #f9a825; }
+        .status-rejected { background: #c62828; }
+        @media (max-width: 768px) {
+            h1 { font-size: 1.6em; }
+            h2 { font-size: 1.3em; }
+            th, td { font-size: 0.9em; padding: 10px; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.4em; }
+            h2 { font-size: 1.1em; }
+            table { font-size: 0.85em; }
+            th, td { padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-logo">
+        <img src="{{ url_for('static', filename='qrcodes/logo.png') }}" alt="Company Logo">
+    </div>
+
+    <h1>🧑‍🔧 Master Dashboard</h1>
+    <p class="subtext">Welcome, {{ username }}! You have full system access.</p>
+
+    <div class="tiles">
+        <a href="{{ url_for('create_order') }}" class="tile"><span>➕</span>Create Work Order</a>
+        
+        <a href="{{ url_for('view_workorders') }}" class="tile"><span>📋</span>View All Work Orders</a>
+        <a href="{{ url_for('operator_efficiency') }}" class="tile"><span>📊</span>Operator Efficiency</a>
+        <a href="{{ url_for('order_log') }}" class="tile"><span>📝</span>Order Action Log</a>
+        <a href="{{ url_for('scan_workorder') }}" class="tile"><span>📷</span>Scan Work Order</a>
+        <a href="#" class="tile"><span>👥</span>Manage Users (coming soon)</a>
+        <a href="#" class="tile"><span>📊</span>View Reports (coming soon)</a>
+    </div>
+
+    <h2>Active Work Orders</h2>
+    <div class="table-wrapper">
+        {% if active_orders %}
+        <table>
+            <tr>
+                <th>Order No</th>
+                <th>Client</th>
+                <th>Part</th>
+                <th>Qty</th>
+                <th>Completed</th>
+                <th>Rejected</th>
+                <th>Status</th>
+                <th>Operator</th>
+                <th>Machine</th>
+                <th>Complaint</th>
+            </tr>
+            {% for order in active_orders %}
+            <tr>
+                <td>{{ order.work_order_no }}</td>
+                <td>{{ order.client_name }}</td>
+                <td>{{ order.part_name }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>{{ order.completed_qty }}</td>
+                <td>{{ order.rejected_qty }}</td>
+                <td>
+                    {% if order.status == 'Active' %}
+                        <span class="status-badge status-active">Active</span>
+                    {% elif order.status == 'In Progress' %}
+                        <span class="status-badge status-progress">In Progress</span>
+                    {% elif order.status == 'Rejected' %}
+                        <span class="status-badge status-rejected">Rejected</span>
+                    {% else %}
+                        <span class="status-badge">{{ order.status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ order.current_operator }}</td>
+                <td>{{ order.current_machine }}</td>
+                <td>{{ order.complaint or '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p style="text-align:center;">No active work orders.</p>
+        {% endif %}
+    </div>
+
+    <h2>🏆 Operator Leaderboard</h2>
+    <div class="table-wrapper">
+        <table>
+            <tr>
+                <th>Rank</th>
+                <th>Operator</th>
+                <th>Overall Score</th>
+            </tr>
+            {% for op in operator_efficiency|sort(attribute='overall_score', reverse=True) %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ op.operator }}</td>
+                <td>{{ op.overall_score }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
