@@ -385,75 +385,86 @@ def finish_order(order_no):
         return "Order not found", 404
 
     message = ""
+    role = session.get("role", "operator")
+
     if request.method == "POST":
         try:
-            qty = int(request.form["quantity"])
+            qty = int(request.form.get("quantity", 0))
         except ValueError:
             qty = 0
+
         action = request.form["action"]
         complaint = request.form.get("complaint", "").strip()
 
-        if qty <= 0:
+        if qty <= 0 and action != "close_order":
             message = "❌ Quantity must be greater than 0."
         elif order.completed_qty + order.rejected_qty + qty > order.quantity:
             message = f"❌ Cannot exceed total order quantity ({order.quantity})."
         else:
-            # Save complaint if provided
             if complaint:
                 order.complaint = complaint
 
-            if action == "complete":
-                order.completed_qty += qty
-                order.status = "Waiting for Handover"
-                order.end_time = datetime.utcnow()
-                db.session.commit()  # <-- Ensure commit here
-                return redirect(url_for('operator_dashboard', username=session['username']))
+            # --- Operator Actions ---
+            if role == "operator":
+                if action in ["complete", "partial"]:
+                    order.completed_qty += qty
+                    order.status = "Waiting for Handover"
+                    order.end_time = datetime.utcnow()
+                    db.session.commit()
+                    return redirect(url_for("operator_dashboard", username=session["username"]))
 
-            elif action == "partial":
-                order.completed_qty += qty
-                order.status = "Waiting for Handover"
-                order.end_time = datetime.utcnow()
-                db.session.commit()  # <-- Ensure commit here
-                return redirect(url_for('operator_dashboard', username=session['username']))
+                elif action == "reject":
+                    reason = request.form.get("reason", "No reason")
+                    order.rejected_qty += qty
+                    new_rejection = RejectionLog(
+                        work_order_id=order.id,
+                        operator=order.current_operator,
+                        quantity=qty,
+                        reason=reason,
+                    )
+                    db.session.add(new_rejection)
+                    order.status = "Waiting for Handover"
+                    order.end_time = datetime.utcnow()
 
-            elif action == "reject":
-                reason = request.form.get("reason", "No reason")
-                order.rejected_qty += qty
-                new_rejection = RejectionLog(
-                    work_order_id=order.id,
-                    operator=order.current_operator,
-                    quantity=qty,
-                    reason=reason
-                )
-                db.session.add(new_rejection)
-                order.status = "Waiting for Handover"
-                order.end_time = datetime.utcnow()
+                    # Auto-create rework order
+                    from random import randint
+                    new_order_no = f"{order.work_order_no}-R{randint(1000,9999)}"
+                    new_order = WorkOrder(
+                        work_order_no=new_order_no,
+                        client_name=order.client_name,
+                        po_number=order.po_number,
+                        part_name=order.part_name,
+                        quantity=qty,
+                        diameter=order.diameter,
+                        flute_length=order.flute_length,
+                        overall_length=order.overall_length,
+                        due_date=order.due_date,
+                        status="Not Started",
+                        complaint=complaint or None,
+                    )
+                    db.session.add(new_order)
+                    db.session.commit()
+                    generate_qr_with_text(new_order_no)
 
-                # Auto-create new work order for rejected quantity
-                from random import randint
-                new_order_no = f"{order.work_order_no}-R{randint(1000,9999)}"
-                new_order = WorkOrder(
-                    work_order_no=new_order_no,
-                    client_name=order.client_name,
-                    po_number=order.po_number,
-                    part_name=order.part_name,
-                    quantity=qty,
-                    diameter=order.diameter,
-                    flute_length=order.flute_length,
-                    overall_length=order.overall_length,
-                    due_date=order.due_date,
-                    status="Not Started",
-                    complaint=complaint if complaint else None
-                )
-                db.session.add(new_order)
-                db.session.commit()  # <-- Ensure commit here
-                generate_qr_with_text(new_order_no)
-                return redirect(url_for('operator_dashboard', username=session['username']))
-            else:
-                db.session.commit()
-                return redirect(url_for('operator_dashboard', username=session['username']))
+                    return redirect(url_for("operator_dashboard", username=session["username"]))
 
-    # Build the log: include all rejections and all completions/partials
+                else:
+                    message = "⚠️ Operators cannot fully close work orders."
+
+            # --- Manager Actions ---
+            elif role == "manager" or role == "master":
+                if action == "close_order":
+                    order.status = "Completed"
+                    order.end_time = datetime.utcnow()
+                    db.session.commit()
+                    message = f"✅ Work Order {order.work_order_no} fully closed by manager."
+                    return redirect(url_for("manager_dashboard", username=session["username"]))
+
+                elif action in ["complete", "partial", "reject"]:
+                    # Managers can still act like operators if needed
+                    return redirect(url_for("finish_order", order_no=order_no))
+
+    # --- Build Action Logs ---
     logs = []
     rejections = RejectionLog.query.filter_by(work_order_id=order.id).order_by(RejectionLog.timestamp).all()
     for rej in rejections:
@@ -462,7 +473,7 @@ def finish_order(order_no):
             "operator": rej.operator,
             "action": "Rejected",
             "quantity": rej.quantity,
-            "reason": rej.reason
+            "reason": rej.reason,
         })
     if order.start_time:
         logs.append({
@@ -470,7 +481,7 @@ def finish_order(order_no):
             "operator": order.current_operator or "",
             "action": "Started",
             "quantity": "",
-            "reason": ""
+            "reason": "",
         })
     if order.last_handover_time:
         logs.append({
@@ -478,7 +489,7 @@ def finish_order(order_no):
             "operator": order.current_operator or "",
             "action": "Handed Over",
             "quantity": "",
-            "reason": getattr(order, "complaint", "") or ""
+            "reason": getattr(order, "complaint", "") or "",
         })
     if order.end_time:
         logs.append({
@@ -486,12 +497,11 @@ def finish_order(order_no):
             "operator": order.current_operator or "",
             "action": order.status,
             "quantity": order.completed_qty,
-            "reason": getattr(order, "complaint", "") or ""
+            "reason": getattr(order, "complaint", "") or "",
         })
     logs = sorted(logs, key=lambda x: x["timestamp"])
 
-    return render_template("finish_order.html", order=order, message=message, logs=logs)
-
+    return render_template("finish_order.html", order=order, message=message, logs=logs, role=role)
 
 @app.route("/operator_dashboard/<username>")
 def operator_dashboard(username):
